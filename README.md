@@ -4,7 +4,7 @@ This project explores building a CRM using **Event Sourcing** in Node.js. The co
 
 ## Goals
 
-- Model CRM entities (for now contacts) as aggregates whose changes are represented by immutable events.
+- Model CRM entities (contacts and clients) as aggregates whose changes are represented by immutable events.
 - Allow the system to grow by adding new slices without affecting the rest of the code.
 - Provide traceability for every operation through a `TraceContext` carried inside the events.
 
@@ -25,6 +25,12 @@ src/
       └─ project-contact/
          ├─ index.ts   # Projection logic
          └─ http.ts    # Endpoint for fetching
+   └─ client/
+      ├─ create-client/
+      ├─ edit-client/
+      ├─ link-contact/
+      ├─ unlink-contact/
+      └─ project-client/
 ```
 
 - **server.ts** registers each slice as an Express router.
@@ -64,6 +70,21 @@ router.post('/contacts', async (req, res) => { /* ... */ });
 
 // 📌 PUT /contacts/:id → Edit contact
 router.put('/contacts/:id', async (req, res) => { /* ... */ });
+```
+
+## Client slice
+
+The client aggregate keeps references to contacts. It provides endpoints for creation, editing and for linking or unlinking contacts:
+
+```ts
+// 📌 POST /clients → Create client
+router.post('/clients', async (req, res) => { /* ... */ });
+
+// 📌 POST /clients/:id/contacts → Link contact
+router.post('/clients/:id/contacts', async (req, res) => { /* ... */ });
+
+// 📌 DELETE /clients/:id/contacts/:contactId → Unlink contact
+router.delete('/clients/:id/contacts/:contactId', async (req, res) => { /* ... */ });
 ```
 
 ## Running
