@@ -2,7 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
-  PutCommand
+  TransactWriteCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const REGION = process.env.AWS_REGION || 'eu-west-1';
@@ -63,24 +63,68 @@ export async function getEventsForAggregate(
   return result.Items || [];
 }
 
+export type AppendDirective =
+  | { cancel: true }
+  | {
+      event: any;
+      aggregateType: string;
+      aggregateId: string;
+      version: number;
+    };
+
+type Subscriber = (event: any) => Promise<AppendDirective | void> | AppendDirective | void;
+
+const subscribers: Record<string, Subscriber[]> = {};
+
+export function subscribe(eventType: string, sub: Subscriber) {
+  if (!subscribers[eventType]) subscribers[eventType] = [];
+  subscribers[eventType].push(sub);
+}
+
 export async function appendEvent(
   event: any,
   aggregateType: string,
   aggregateId: string,
   version: number
 ) {
-  const item = {
+  const base = {
     PK: `${aggregateType}#${aggregateId}`,
     SK: `v${String(version).padStart(10, "0")}`,
     ...event
   };
 
-  logUndefinedPaths(item);
-  assertNoUndefined(item);
+  const directives = await Promise.all(
+    (subscribers[event.type] || []).map((s) => Promise.resolve(s(event)))
+  );
 
-  await docClient.send(new PutCommand({
-    TableName: "EventStore",
-    Item: item,
-    ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)"
+  if (directives.some((d) => d && "cancel" in d && d.cancel)) {
+    return;
+  }
+
+  const items = [base];
+
+  for (const d of directives) {
+    if (d && "event" in d) {
+      items.push({
+        PK: `${d.aggregateType}#${d.aggregateId}`,
+        SK: `v${String(d.version).padStart(10, "0")}`,
+        ...d.event
+      });
+    }
+  }
+
+  for (const itm of items) {
+    logUndefinedPaths(itm);
+    assertNoUndefined(itm);
+  }
+
+  const transactItems = items.map((itm) => ({
+    Put: {
+      TableName: "EventStore",
+      Item: itm,
+      ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)"
+    }
   }));
+
+  await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
 }
