@@ -77,6 +77,16 @@ npm run dev
 
 The service will be available at `http://localhost:3000` and exposes its endpoints under `/api`.
 
+## Testing
+
+This project uses Node.js's built-in test runner which requires **Node.js v20 or newer**. When you run:
+
+```bash
+npm run test
+```
+
+the `test` script first compiles the TypeScript sources into the `dist/` folder and then executes `node --test` against the generated JavaScript files.
+
 ## Next steps
 
 - Add new slices (for example, managing opportunities or tasks).
