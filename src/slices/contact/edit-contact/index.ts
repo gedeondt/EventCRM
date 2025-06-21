@@ -1,6 +1,6 @@
 // src/slices/contact/edit-contact.ts
 
-import { TraceContext } from '../../shared/trace.js';
+import { TraceContext } from '../../../shared/trace.js';
 
 export type EditContactCommand = {
   contactId: string;

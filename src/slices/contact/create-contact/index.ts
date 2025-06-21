@@ -1,4 +1,4 @@
-import { TraceContext } from '../../shared/trace.js';
+import { TraceContext } from '../../../shared/trace.js';
 
 export type CreateContactCommand = {
   contactId: string;
