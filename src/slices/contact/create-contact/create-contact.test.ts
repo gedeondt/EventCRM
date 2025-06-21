@@ -1,11 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleCreateContact } from './index.js';
+import { ContactId } from '../value-objects/contact-id.js';
+import { Name } from '../value-objects/name.js';
+import { Mail } from '../value-objects/mail.js';
 
 const baseTrace = { traceId: 't', spanId: 's', timestamp: new Date().toISOString() };
 
 test('valid command produces event', () => {
-  const cmd = { contactId: '1', name: 'John', email: 'john@example.com', trace: baseTrace };
+  const cmd = {
+    contactId: new ContactId('1'),
+    name: new Name('John'),
+    email: new Mail('john@example.com'),
+    trace: baseTrace
+  };
   const res = handleCreateContact(cmd);
   assert.equal(res.ok, true);
   if (res.ok) {
@@ -14,7 +22,7 @@ test('valid command produces event', () => {
 });
 
 test('invalid email fails', () => {
-  const cmd = { contactId: '1', name: 'John', email: 'invalid', trace: baseTrace };
-  const res = handleCreateContact(cmd);
-  assert.equal(res.ok, false);
+  assert.throws(() => {
+    new Mail('invalid');
+  });
 });

@@ -1,9 +1,12 @@
 import { TraceContext } from '../../../shared/trace.js';
+import { ContactId } from '../value-objects/contact-id.js';
+import { Name } from '../value-objects/name.js';
+import { Mail } from '../value-objects/mail.js';
 
 export type CreateContactCommand = {
-  contactId: string;
-  name: string;
-  email: string;
+  contactId: ContactId;
+  name: Name;
+  email: Mail;
   trace: TraceContext;
 };
 
@@ -18,33 +21,14 @@ export type ContactCreatedEvent = {
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
-function validate(cmd: CreateContactCommand): Result<CreateContactCommand> {
-  if (!cmd.contactId || cmd.contactId.trim() === '') {
-    return { ok: false, error: 'contactId is required' };
-  }
-
-  if (!cmd.name || cmd.name.trim().length < 2) {
-    return { ok: false, error: 'name must be at least 2 characters' };
-  }
-
-  if (!cmd.email || !cmd.email.includes('@')) {
-    return { ok: false, error: 'invalid email' };
-  }
-
-  return { ok: true, value: cmd };
-}
-
 export function handleCreateContact(
   cmd: CreateContactCommand
 ): Result<ContactCreatedEvent> {
-  const valid = validate(cmd);
-  if (!valid.ok) return { ok: false, error: valid.error };
-
   const event: ContactCreatedEvent = {
     type: 'ContactCreated',
-    contactId: cmd.contactId,
-    name: cmd.name,
-    email: cmd.email,
+    contactId: cmd.contactId.value,
+    name: cmd.name.value,
+    email: cmd.email.value,
     trace: cmd.trace,
     timestamp: new Date().toISOString(),
   };

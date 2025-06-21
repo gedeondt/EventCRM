@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { handleCreateContact } from './index.js';
 import { appendEvent } from '../../../shared/event-store.js';
 import { createTraceContext } from '../../../shared/trace.js';
+import { ContactId } from '../value-objects/contact-id.js';
+import { Name } from '../value-objects/name.js';
+import { Mail } from '../value-objects/mail.js';
 
 const router = Router();
 
@@ -16,7 +19,18 @@ function extractTraceFromHeaders(headers: Record<string, unknown>) {
 
 router.post('/contacts', async (req, res) => {
   const trace = extractTraceFromHeaders(req.headers);
-  const cmd = { ...req.body, trace };
+  let cmd;
+  try {
+    cmd = {
+      contactId: new ContactId(req.body.contactId),
+      name: new Name(req.body.name),
+      email: new Mail(req.body.email),
+      trace
+    };
+  } catch (err) {
+    const error = err as Error;
+    return res.status(400).json({ error: error.message });
+  }
 
   const result = handleCreateContact(cmd);
 
