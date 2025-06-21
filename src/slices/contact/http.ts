@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { handleCreateContact } from './create-contact.js';
-import { handleEditContact } from './edit-contact.js';
-import { appendEvent } from '../../shared/event-store.js';
-import { createTraceContext } from '../../shared/trace.js';
+import { projectContact } from './project-contact';
+import { handleCreateContact } from './create-contact';
+import { handleEditContact } from './edit-contact';
+import { appendEvent } from '../../shared/event-store';
+import { createTraceContext } from '../../shared/trace';
+import { getEventsForAggregate } from '../../shared/event-store';
 
 const router = Router();
 
@@ -15,6 +17,24 @@ function extractTraceFromHeaders(headers: Record<string, unknown>) {
     userId: headers['x-user-id']?.toString()
   });
 }
+
+router.get('/contacts/:id', async (req, res) => {
+  const contactId = req.params.id;
+
+  try {
+    const events = await getEventsForAggregate('contact', contactId);
+    const state = projectContact(events);
+
+    if (!state) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    return res.status(200).json(state);
+  } catch (err) {
+    console.error('[get-contact error]', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // 📌 POST /contacts → Crear contacto
 router.post('/contacts', async (req, res) => {
@@ -31,7 +51,7 @@ router.post('/contacts', async (req, res) => {
   }
 
   try {
-    await appendEvent(result.value, result.value.contactId, 1);
+    await appendEvent(result.value, 'contact', result.value.contactId, 1);
     console.log(`[ContactCreated]`, {
       traceId: trace.traceId,
       spanId: trace.spanId,

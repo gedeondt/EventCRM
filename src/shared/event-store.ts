@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  QueryCommand,
   PutCommand
 } from "@aws-sdk/lib-dynamodb";
 
@@ -42,17 +43,38 @@ function assertNoUndefined(obj: any, path: string[] = []) {
   }
 }
 
-export async function appendEvent(event: any, aggregateId: string, version: number) {
+export async function getEventsForAggregate(
+  aggregateType: string,
+  aggregateId: string
+): Promise<any[]> {
+  const pk = `${aggregateType}#${aggregateId}`;
+
+  const result = await docClient.send(
+    new QueryCommand({
+      TableName: "EventStore",
+      KeyConditionExpression: "PK = :pk",
+      ExpressionAttributeValues: {
+        ":pk": pk
+      },
+      ScanIndexForward: true
+    })
+  );
+
+  return result.Items || [];
+}
+
+export async function appendEvent(
+  event: any,
+  aggregateType: string,
+  aggregateId: string,
+  version: number
+) {
   const item = {
-    PK: `contact#${aggregateId}`,
+    PK: `${aggregateType}#${aggregateId}`,
     SK: `v${String(version).padStart(10, "0")}`,
     ...event
   };
 
-  console.log('[DynamoDB] Preparing to save item:');
-  console.dir(item, { depth: null });
-
-  // 🔍 Check y logueo antes de fallar
   logUndefinedPaths(item);
   assertNoUndefined(item);
 
