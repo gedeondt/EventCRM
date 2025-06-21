@@ -15,10 +15,16 @@ src/
 ├─ server.ts          # Express service entrypoint
 ├─ shared/            # Common utilities (event-store, trace)
 └─ slices/
-   └─ contact/        # Vertical slice for managing contacts
-      ├─ create-contact.ts
-      ├─ edit-contact.ts
-      └─ http.ts      # REST endpoints for the slice
+   └─ contact/
+      ├─ create-contact/
+      │  ├─ index.ts   # Command + event
+      │  └─ http.ts    # REST endpoint for creation
+      ├─ edit-contact/
+      │  ├─ index.ts
+      │  └─ http.ts    # Endpoint for editing
+      └─ project-contact/
+         ├─ index.ts   # Projection logic
+         └─ http.ts    # Endpoint for fetching
 ```
 
 - **server.ts** registers each slice as an Express router.
@@ -50,7 +56,7 @@ _Infrastructure:_ the `infra/` folder contains Terraform definitions that create
 
 ## Contact slice
 
-The first slice implemented handles creating and editing contacts. Each command produces an event (`ContactCreated` or `ContactEdited`) that is then stored using `appendEvent`. The HTTP routes are defined in `http.ts`:
+The first slice implemented handles creating and editing contacts. Each command produces an event (`ContactCreated` or `ContactEdited`) that is then stored using `appendEvent`. Each operation now has its own folder with a dedicated `http.ts` file:
 
 ```ts
 // 📌 POST /contacts → Create contact
