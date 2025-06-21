@@ -1,11 +1,14 @@
 // src/slices/contact/edit-contact.ts
 
 import { TraceContext } from '../../../shared/trace.js';
+import { ContactId } from '../value-objects/contact-id.js';
+import { Name } from '../value-objects/name.js';
+import { Mail } from '../value-objects/mail.js';
 
 export type EditContactCommand = {
-  contactId: string;
-  name?: string;
-  email?: string;
+  contactId: ContactId;
+  name?: Name;
+  email?: Mail;
   trace: TraceContext;
 };
 
@@ -21,16 +24,8 @@ export type ContactEditedEvent = {
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 function validate(cmd: EditContactCommand): Result<EditContactCommand> {
-  if (!cmd.contactId || cmd.contactId.trim() === '') {
-    return { ok: false, error: 'contactId is required' };
-  }
-
   if (!cmd.name && !cmd.email) {
     return { ok: false, error: 'nothing to update' };
-  }
-
-  if (cmd.email && !cmd.email.includes('@')) {
-    return { ok: false, error: 'invalid email' };
   }
 
   return { ok: true, value: cmd };
@@ -44,9 +39,9 @@ export function handleEditContact(
 
   const event: ContactEditedEvent = {
     type: 'ContactEdited',
-    contactId: cmd.contactId,
-    name: cmd.name,
-    email: cmd.email,
+    contactId: cmd.contactId.value,
+    name: cmd.name?.value,
+    email: cmd.email?.value,
     trace: cmd.trace,
     timestamp: new Date().toISOString()
   };
