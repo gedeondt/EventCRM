@@ -1,20 +1,39 @@
-// src/slices/contact/http.ts
-
 import { Router } from 'express';
-import { handleCreateContact } from './create-contact';
-import { appendEvent } from '../../shared/event-store';
+import { handleCreateContact } from './create-contact.js';
+import { appendEvent } from '../../shared/event-store.js';
+import { createTraceContext } from '../../shared/trace.js';
 
 const router = Router();
 
 router.post('/contacts', async (req, res) => {
-  const cmd = req.body;
-  const event = handleCreateContact(cmd);
+  const trace = createTraceContext({
+    traceId: req.headers['x-trace-id']?.toString(),
+    spanId: req.headers['x-span-id']?.toString(),
+    source: req.headers['x-source']?.toString() || 'api',
+    userId: req.headers['x-user-id']?.toString()
+  });
+
+  const cmd = {
+    ...req.body,
+    trace
+  };
+
+  const result = handleCreateContact(cmd);
+
+  if (!result.ok) {
+    return res.status(400).json({ error: result.error });
+  }
 
   try {
-    await appendEvent(event, event.contactId, 1); // versión inicial
-    res.status(201).send({ status: 'ok' });
+    await appendEvent(result.value, result.value.contactId, 1);
+    console.log(`[ContactCreated]`, {
+      traceId: trace.traceId,
+      spanId: trace.spanId,
+      contactId: result.value.contactId
+    });
+    return res.status(201).json({ status: 'ok' });
   } catch (err) {
-    res.status(500).send({ error: (err as Error).message });
+    return res.status(500).json({ error: (err as Error).message });
   }
 });
 
