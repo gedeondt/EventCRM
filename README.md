@@ -44,7 +44,7 @@ Events are persisted in **DynamoDB**. The helper `appendEvent` controls the aggr
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
-  PutCommand
+  TransactWriteCommand
 } from '@aws-sdk/lib-dynamodb';
 
 // ...
@@ -54,8 +54,20 @@ export async function appendEvent(event: any, aggregateId: string, version: numb
     SK: `v${String(version).padStart(10, '0')}`,
     ...event
   };
-  // Validation and write to DynamoDB
+  // Subscribers may add more events or cancel
+  await docClient.send(new TransactWriteCommand({
+    TransactItems: [{ Put: { TableName: 'EventStore', Item: item } }]
+  }));
 }
+```
+
+Slices can **subscribe** to specific event types:
+
+```ts
+subscribe('ContactDeleted', (evt) => {
+  if (!evt.cascade) return { cancel: true };
+  return { event: /* ... */, aggregateType: 'client', aggregateId: evt.clientId, version: 5 };
+});
 ```
 
 _Infrastructure:_ the `infra/` folder contains Terraform definitions that create the `EventStore` table with streams enabled for future event subscriptions.
@@ -70,6 +82,9 @@ router.post('/contacts', async (req, res) => { /* ... */ });
 
 // 📌 PUT /contacts/:id → Edit contact
 router.put('/contacts/:id', async (req, res) => { /* ... */ });
+
+// 📌 DELETE /contacts/:id → Delete contact
+router.delete('/contacts/:id', async (req, res) => { /* ... */ });
 ```
 
 ## Client slice
@@ -113,3 +128,4 @@ the `test` script first compiles the TypeScript sources into the `dist/` folder 
 - Add new slices (for example, managing opportunities or tasks).
 - Implement event projections and queries.
 - Automate fetching and checking aggregate versions.
+- Explore event subscriptions to coordinate aggregates.
