@@ -1,0 +1,43 @@
+# Node.js
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite / vite-node
+.vite/
+
+# Logs y sistemas temporales
+*.log
+*.log.*
+
+# macOS
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+crash.log
+
+# AWS credentials si haces algo local
+.aws-sam/
+.aws/
+
+# IDEs
+.vscode/
+.idea/
+*.sw?
+
+# Archivos de sistema
+Thumbs.db
