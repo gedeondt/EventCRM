@@ -1,4 +1,4 @@
-// src/slices/contact/project-contact.ts
+// src/aggregates/contact/project-contact.ts
 
 type ContactState = {
   contactId: string;

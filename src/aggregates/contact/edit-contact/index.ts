@@ -1,4 +1,4 @@
-// src/slices/contact/edit-contact.ts
+// src/aggregates/contact/edit-contact.ts
 
 import { TraceContext } from '../../../shared/trace.js';
 import { ContactId } from '../value-objects/contact-id.js';
