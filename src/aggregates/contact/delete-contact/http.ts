@@ -38,13 +38,17 @@ export function registerDeleteContactRoutes(router: Router, eventStore: EventSto
 
     try {
       const version = 3; // TODO: real version
+      const pk = `contact#${cmd.contactId.value}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
       await eventStore.appendEvent(result.value, 'contact', cmd.contactId.value, version);
       const durationMs = Date.now() - startTime;
       console.log(`[ContactDeleted]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         contactId: cmd.contactId.value,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

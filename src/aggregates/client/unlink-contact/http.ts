@@ -35,14 +35,19 @@ export function registerUnlinkContactRoutes(router: Router, eventStore: EventSto
     if (!result.ok) return res.status(400).json({ error: result.error });
 
     try {
-      await eventStore.appendEvent(result.value, 'client', result.value.clientId, 4);
+      const version = 4;
+      const pk = `client#${result.value.clientId}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
+      await eventStore.appendEvent(result.value, 'client', result.value.clientId, version);
       const durationMs = Date.now() - startTime;
       console.log(`[ContactUnlinked]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         clientId: result.value.clientId,
         contactId: result.value.contactId,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

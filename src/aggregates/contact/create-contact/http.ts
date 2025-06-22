@@ -39,13 +39,18 @@ export function registerCreateContactRoutes(router: Router, eventStore: EventSto
     if (!result.ok) return res.status(400).json({ error: result.error });
 
     try {
-      await eventStore.appendEvent(result.value, 'contact', result.value.contactId, 1);
+      const version = 1;
+      const pk = `contact#${result.value.contactId}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
+      await eventStore.appendEvent(result.value, 'contact', result.value.contactId, version);
       const durationMs = Date.now() - startTime;
       console.log(`[ContactCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         contactId: result.value.contactId,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
