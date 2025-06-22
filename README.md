@@ -68,6 +68,8 @@ export async function appendEvent(event: any, aggregateId: string, version: numb
 }
 ```
 
+The event store can run in **direct** mode (default) or in **batch** mode. Set `EVENT_STORE_MODE=batch` to buffer events locally and write them in bulk every 10 seconds. Reads always come from DynamoDB.
+
 Slices can **subscribe** to specific event types:
 
 ```ts
@@ -117,6 +119,9 @@ Install dependencies and start the development server:
 npm install
 npm run dev
 ```
+
+Run `npm run dev:batch` to start in batch mode, which buffers events locally and
+flushes them to DynamoDB every 10 seconds.
 
 The service will be available at `http://localhost:3000` and exposes its endpoints under `/api`.
 

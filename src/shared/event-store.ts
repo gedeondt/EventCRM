@@ -3,7 +3,8 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   ScanCommand,
-  TransactWriteCommand
+  TransactWriteCommand,
+  BatchWriteCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const REGION = process.env.AWS_REGION || 'eu-west-1';
@@ -11,6 +12,30 @@ const REGION = process.env.AWS_REGION || 'eu-west-1';
 const client = new DynamoDBClient({ region: REGION });
 
 export const docClient = DynamoDBDocumentClient.from(client);
+
+const MODE = process.env.EVENT_STORE_MODE ?? 'direct';
+const buffer: Record<string, any>[] = [];
+
+async function flushBuffer() {
+  if (buffer.length === 0) return;
+  const items = buffer.splice(0, buffer.length);
+  for (let i = 0; i < items.length; i += 25) {
+    const batch = items.slice(i, i + 25).map((Item) => ({ PutRequest: { Item } }));
+    let requestItems: Record<string, any> = { EventStore: batch };
+    do {
+      const res = await docClient.send(new BatchWriteCommand({ RequestItems: requestItems }));
+      requestItems = res.UnprocessedItems && res.UnprocessedItems.EventStore?.length
+        ? { EventStore: res.UnprocessedItems.EventStore }
+        : undefined as any;
+    } while (requestItems);
+  }
+}
+
+if (MODE === 'batch') {
+  setInterval(() => {
+    flushBuffer().catch((err) => console.error('[flush error]', err));
+  }, 10_000);
+}
 
 // 🔍 Detecta undefineds y loguea la ruta exacta
 function logUndefinedPaths(obj: any, path: string[] = []) {
@@ -149,6 +174,12 @@ export async function appendEvent(
       ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)"
     }
   }));
+  if (MODE === 'batch') {
+    for (const t of transactItems) {
+      buffer.push(t.Put.Item);
+    }
+    return;
+  }
 
   await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
 }
