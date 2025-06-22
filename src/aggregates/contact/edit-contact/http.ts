@@ -39,13 +39,17 @@ export function registerEditContactRoutes(router: Router, eventStore: EventStore
 
     try {
       const version = 2; // TODO: real version
+      const pk = `contact#${cmd.contactId.value}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
       await eventStore.appendEvent(result.value, 'contact', cmd.contactId.value, version);
       const durationMs = Date.now() - startTime;
       console.log(`[ContactEdited]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         contactId: cmd.contactId.value,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

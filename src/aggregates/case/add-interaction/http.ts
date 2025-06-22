@@ -37,13 +37,17 @@ export function registerAddInteractionRoutes(router: Router, eventStore: EventSt
 
     try {
       const version = 2; // TODO: real version
+      const pk = `case#${cmd.caseId.value}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
       await eventStore.appendEvent(result.value, 'case', cmd.caseId.value, version);
       const durationMs = Date.now() - startTime;
       console.log(`[InteractionAdded]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         caseId: cmd.caseId.value,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

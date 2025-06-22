@@ -38,14 +38,19 @@ export function registerCreateCaseRoutes(router: Router, eventStore: EventStore)
     if (!result.ok) return res.status(400).json({ error: result.error });
 
     try {
-      await eventStore.appendEvent(result.value, 'case', result.value.caseId, 1);
+      const version = 1;
+      const pk = `case#${result.value.caseId}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
+      await eventStore.appendEvent(result.value, 'case', result.value.caseId, version);
       const durationMs = Date.now() - startTime;
       console.log(`[CaseCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         caseId: result.value.caseId,
         clientId: result.value.clientId,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

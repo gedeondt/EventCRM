@@ -37,13 +37,18 @@ export function registerCreateClientRoutes(router: Router, eventStore: EventStor
     if (!result.ok) return res.status(400).json({ error: result.error });
 
     try {
-      await eventStore.appendEvent(result.value, 'client', result.value.clientId, 1);
+      const version = 1;
+      const pk = `client#${result.value.clientId}`;
+      const sk = `v${String(version).padStart(10, '0')}`;
+      await eventStore.appendEvent(result.value, 'client', result.value.clientId, version);
       const durationMs = Date.now() - startTime;
       console.log(`[ClientCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         clientId: result.value.clientId,
-        durationMs
+        durationMs,
+        pk,
+        sk
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
