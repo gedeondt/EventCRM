@@ -4,6 +4,7 @@ import type { EventStore } from '../../../shared/event-store.js';
 import { createTraceContext } from '../../../shared/trace.js';
 import { CaseId } from '../value-objects/case-id.js';
 import { Description } from '../value-objects/description.js';
+import { ClientId } from '../../client/value-objects/client-id.js';
 
 export function registerCreateCaseRoutes(router: Router, eventStore: EventStore) {
   function extractTraceFromHeaders(headers: Record<string, unknown>) {
@@ -21,6 +22,7 @@ export function registerCreateCaseRoutes(router: Router, eventStore: EventStore)
     try {
       cmd = {
         caseId: new CaseId(req.body.caseId),
+        clientId: new ClientId(req.body.clientId),
         openedAt: req.body.openedAt,
         description: new Description(req.body.description),
         trace
@@ -39,7 +41,8 @@ export function registerCreateCaseRoutes(router: Router, eventStore: EventStore)
       console.log(`[CaseCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        caseId: result.value.caseId
+        caseId: result.value.caseId,
+        clientId: result.value.clientId
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

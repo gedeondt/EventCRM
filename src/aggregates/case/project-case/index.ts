@@ -1,5 +1,6 @@
 export type CaseState = {
   caseId: string;
+  clientId?: string;
   description?: string;
   openedAt?: string;
   closedAt?: string;
@@ -12,6 +13,7 @@ export function projectCase(events: any[]): CaseState | null {
 
   const state: CaseState = {
     caseId: '',
+    clientId: undefined,
     interactions: [],
     version: 0
   };
@@ -20,6 +22,7 @@ export function projectCase(events: any[]): CaseState | null {
     switch (event.type) {
       case 'CaseCreated':
         state.caseId = event.caseId;
+        state.clientId = event.clientId;
         state.description = event.description;
         state.openedAt = event.openedAt;
         state.version += 1;
