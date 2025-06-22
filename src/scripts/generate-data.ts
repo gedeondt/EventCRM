@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 const count = parseInt(process.argv[2] || '0', 10) || 1;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000/api';
 
@@ -54,9 +56,7 @@ function randPhone(): string {
 }
 
 function randomId(): string {
-  return (
-    Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
-  );
+  return randomUUID();
 }
 
 async function createClient(name: string): Promise<string> {
