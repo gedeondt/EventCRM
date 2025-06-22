@@ -59,7 +59,7 @@ function randomId(): string {
   );
 }
 
-async function createClient(name: string) {
+async function createClient(name: string): Promise<string> {
   const body = {
     clientId: randomId(),
     name,
@@ -70,9 +70,10 @@ async function createClient(name: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+  return body.clientId;
 }
 
-async function createContact(name: string) {
+async function createContact(name: string): Promise<string> {
   const body = {
     contactId: randomId(),
     name,
@@ -84,12 +85,22 @@ async function createContact(name: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+  return body.contactId;
+}
+
+async function linkContact(clientId: string, contactId: string) {
+  await fetch(`${BASE_URL}/clients/${clientId}/contacts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId })
+  });
 }
 
 async function main() {
   for (let i = 0; i < count; i++) {
-    await createClient(randName());
-    await createContact(randName());
+    const clientId = await createClient(randName());
+    const contactId = await createContact(randName());
+    await linkContact(clientId, contactId);
   }
   console.log(`Generated ${count} clients and contacts`);
 }
