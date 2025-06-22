@@ -19,6 +19,7 @@ export function registerEditContactRoutes(router: Router, eventStore: EventStore
 
   router.put('/contacts/:id', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -39,10 +40,12 @@ export function registerEditContactRoutes(router: Router, eventStore: EventStore
     try {
       const version = 2; // TODO: real version
       await eventStore.appendEvent(result.value, 'contact', cmd.contactId.value, version);
+      const durationMs = Date.now() - startTime;
       console.log(`[ContactEdited]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        contactId: cmd.contactId.value
+        contactId: cmd.contactId.value,
+        durationMs
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

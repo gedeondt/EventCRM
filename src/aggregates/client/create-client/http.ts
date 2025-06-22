@@ -18,6 +18,7 @@ export function registerCreateClientRoutes(router: Router, eventStore: EventStor
 
   router.post('/clients', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -37,10 +38,12 @@ export function registerCreateClientRoutes(router: Router, eventStore: EventStor
 
     try {
       await eventStore.appendEvent(result.value, 'client', result.value.clientId, 1);
+      const durationMs = Date.now() - startTime;
       console.log(`[ClientCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        clientId: result.value.clientId
+        clientId: result.value.clientId,
+        durationMs
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

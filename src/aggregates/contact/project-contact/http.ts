@@ -17,6 +17,7 @@ export function registerProjectContactRoutes(router: Router, eventStore: EventSt
   router.get('/contacts/:id', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
     const contactId = req.params.id;
+    const startTime = Date.now();
 
     try {
       const events = await eventStore.getEventsForAggregate('contact', contactId);
@@ -26,7 +27,8 @@ export function registerProjectContactRoutes(router: Router, eventStore: EventSt
         return res.status(404).json({ error: 'Contact not found' });
       }
 
-      console.log(`[ContactFetched]`, { traceId: trace.traceId, spanId: trace.spanId, contactId });
+      const durationMs = Date.now() - startTime;
+      console.log(`[ContactFetched]`, { traceId: trace.traceId, spanId: trace.spanId, contactId, durationMs });
       return res.status(200).json(state);
     } catch (err) {
       console.error('[get-contact error]', err);

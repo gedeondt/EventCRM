@@ -17,6 +17,7 @@ export function registerDeleteContactRoutes(router: Router, eventStore: EventSto
 
   router.delete('/contacts/:id', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     const cascade = req.query.cascade === 'true';
     let cmd;
     try {
@@ -38,10 +39,12 @@ export function registerDeleteContactRoutes(router: Router, eventStore: EventSto
     try {
       const version = 3; // TODO: real version
       await eventStore.appendEvent(result.value, 'contact', cmd.contactId.value, version);
+      const durationMs = Date.now() - startTime;
       console.log(`[ContactDeleted]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        contactId: cmd.contactId.value
+        contactId: cmd.contactId.value,
+        durationMs
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

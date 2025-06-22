@@ -17,6 +17,7 @@ export function registerLinkContactRoutes(router: Router, eventStore: EventStore
 
   router.post('/clients/:id/contacts', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -35,11 +36,13 @@ export function registerLinkContactRoutes(router: Router, eventStore: EventStore
 
     try {
       await eventStore.appendEvent(result.value, 'client', result.value.clientId, 3);
+      const durationMs = Date.now() - startTime;
       console.log(`[ContactLinked]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         clientId: result.value.clientId,
-        contactId: result.value.contactId
+        contactId: result.value.contactId,
+        durationMs
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
