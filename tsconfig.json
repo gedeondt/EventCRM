@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "moduleDetection": "force",
     "allowImportingTsExtensions": false,
+    "types": ["node"],
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]

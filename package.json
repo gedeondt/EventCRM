@@ -2,6 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite-node src/server.ts",
+    "dev:batch": "EVENT_STORE_MODE=batch vite-node src/server.ts",
     "test": "tsc --outDir dist && node --test dist/**/*.test.js",
     "seed": "vite-node src/scripts/generate-data.ts"
   },
