@@ -65,16 +65,26 @@ export async function getEventsForAggregate(
 }
 
 export async function getEventsByPrefix(prefix: string): Promise<any[]> {
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: "EventStore",
-      FilterExpression: "begins_with(PK, :pk)",
-      ExpressionAttributeValues: {
-        ":pk": prefix
-      }
-    })
-  );
-  return result.Items || [];
+  const items: any[] = [];
+  let ExclusiveStartKey: Record<string, any> | undefined = undefined;
+
+  do {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: "EventStore",
+        FilterExpression: "begins_with(PK, :pk)",
+        ExpressionAttributeValues: {
+          ":pk": prefix
+        },
+        ExclusiveStartKey
+      })
+    );
+
+    if (result.Items) items.push(...result.Items);
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, any> | undefined;
+  } while (ExclusiveStartKey);
+
+  return items;
 }
 
 export type AppendDirective =
