@@ -36,6 +36,13 @@ src/
 - **server.ts** registers each aggregate as an Express router.
 - Inside `aggregates/` each aggregate is composed of slices implementing the command and event flow.
 
+### Entities
+
+The project models two core aggregates:
+
+- **Contact** — `contactId`, `name`, `email` and `phone`.
+- **Client** — `clientId`, `name` and `industry`.
+
 ## Event Store
 
 Events are persisted in **DynamoDB**. The helper `appendEvent` controls the aggregate version and verifies that no `undefined` values are present before writing:

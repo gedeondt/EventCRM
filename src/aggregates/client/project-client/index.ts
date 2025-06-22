@@ -1,6 +1,7 @@
 export type ClientState = {
   clientId: string;
   name?: string;
+  industry?: string;
   contactIds: string[];
   version: number;
 };
@@ -19,11 +20,13 @@ export function projectClient(events: any[]): ClientState | null {
       case 'ClientCreated':
         state.clientId = event.clientId;
         state.name = event.name;
+        state.industry = event.industry;
         state.version += 1;
         break;
 
       case 'ClientEdited':
         if (event.name) state.name = event.name;
+        if (event.industry) state.industry = event.industry;
         state.version += 1;
         break;
 

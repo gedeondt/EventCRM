@@ -5,6 +5,7 @@ import { createTraceContext } from '../../../shared/trace.js';
 import { ContactId } from '../value-objects/contact-id.js';
 import { Name } from '../value-objects/name.js';
 import { Mail } from '../value-objects/mail.js';
+import { Phone } from '../value-objects/phone.js';
 
 export function registerEditContactRoutes(router: Router, eventStore: EventStore) {
   function extractTraceFromHeaders(headers: Record<string, unknown>) {
@@ -24,6 +25,7 @@ export function registerEditContactRoutes(router: Router, eventStore: EventStore
         contactId: new ContactId(req.params.id),
         name: req.body.name !== undefined ? new Name(req.body.name) : undefined,
         email: req.body.email !== undefined ? new Mail(req.body.email) : undefined,
+        phone: req.body.phone !== undefined ? new Phone(req.body.phone) : undefined,
         trace
       };
     } catch (err) {

@@ -4,6 +4,7 @@ type ContactState = {
   contactId: string;
   name?: string;
   email?: string;
+  phone?: string;
   version: number;
 };
 
@@ -21,12 +22,14 @@ export function projectContact(events: any[]): ContactState | null {
         state.contactId = event.contactId;
         state.name = event.name;
         state.email = event.email;
+        state.phone = event.phone;
         state.version += 1;
         break;
 
       case 'ContactEdited':
         if (event.name) state.name = event.name;
         if (event.email) state.email = event.email;
+        if (event.phone) state.phone = event.phone;
         state.version += 1;
         break;
     }

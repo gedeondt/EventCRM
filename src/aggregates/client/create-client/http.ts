@@ -4,6 +4,7 @@ import type { EventStore } from '../../../shared/event-store.js';
 import { createTraceContext } from '../../../shared/trace.js';
 import { ClientId } from '../value-objects/client-id.js';
 import { Name } from '../value-objects/name.js';
+import { Industry } from '../value-objects/industry.js';
 
 export function registerCreateClientRoutes(router: Router, eventStore: EventStore) {
   function extractTraceFromHeaders(headers: Record<string, unknown>) {
@@ -22,6 +23,7 @@ export function registerCreateClientRoutes(router: Router, eventStore: EventStor
       cmd = {
         clientId: new ClientId(req.body.clientId),
         name: new Name(req.body.name),
+        industry: new Industry(req.body.industry),
         trace
       };
     } catch (err) {

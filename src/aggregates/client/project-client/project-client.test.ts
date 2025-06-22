@@ -8,6 +8,7 @@ const created = {
   type: 'ClientCreated',
   clientId: '1',
   name: 'ACME',
+  industry: 'Software',
   trace,
   timestamp: new Date().toISOString()
 };
@@ -27,5 +28,6 @@ test('returns null for empty events', () => {
 test('projects latest state', () => {
   const state = projectClient([created, linked]);
   assert.equal(state?.contactIds.length, 1);
+  assert.equal(state?.industry, 'Software');
   assert.equal(state?.version, 2);
 });
