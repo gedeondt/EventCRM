@@ -1,10 +1,10 @@
-import { subscribe, AppendDirective } from '../../../shared/event-store.js';
+import type { EventStore, AppendDirective } from '../../../shared/event-store.js';
 import { handleUnlinkContact } from './index.js';
 import { ClientId } from '../value-objects/client-id.js';
 import { ContactId } from '../../contact/value-objects/contact-id.js';
 
-export function registerUnlinkOnContactDeleted() {
-  subscribe('ContactDeleted', (event) => {
+export function registerUnlinkOnContactDeleted(eventStore: EventStore) {
+  eventStore.subscribe('ContactDeleted', (event) => {
     if (!event.cascade) {
       return { cancel: true } as AppendDirective;
     }

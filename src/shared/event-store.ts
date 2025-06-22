@@ -128,3 +128,15 @@ export async function appendEvent(
 
   await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
 }
+
+export interface EventStore {
+  appendEvent: typeof appendEvent;
+  getEventsForAggregate: typeof getEventsForAggregate;
+  subscribe: typeof subscribe;
+}
+
+export const eventStore: EventStore = {
+  appendEvent,
+  getEventsForAggregate,
+  subscribe
+};
