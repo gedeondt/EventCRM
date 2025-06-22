@@ -9,6 +9,7 @@ const created = {
   contactId: '1',
   name: 'John',
   email: 'john@example.com',
+  phone: '123456789',
   trace,
   timestamp: new Date().toISOString()
 };
@@ -17,6 +18,7 @@ const edited = {
   type: 'ContactEdited',
   contactId: '1',
   name: 'Jane',
+  phone: '987654321',
   trace,
   timestamp: new Date().toISOString()
 };
@@ -28,5 +30,6 @@ test('returns null for empty events', () => {
 test('projects latest state', () => {
   const state = projectContact([created, edited]);
   assert.equal(state?.name, 'Jane');
+  assert.equal(state?.phone, '987654321');
   assert.equal(state?.version, 2);
 });
