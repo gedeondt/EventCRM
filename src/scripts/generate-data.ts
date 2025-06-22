@@ -96,13 +96,61 @@ async function linkContact(clientId: string, contactId: string) {
   });
 }
 
+async function createCase(clientId: string): Promise<string> {
+  const body = {
+    caseId: randomId(),
+    clientId,
+    openedAt: new Date().toISOString(),
+    description: `Issue ${randomId().slice(0, 5)}`
+  };
+  await fetch(`${BASE_URL}/cases`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return body.caseId;
+}
+
+async function addInteraction(caseId: string) {
+  const body = {
+    interactionDate: new Date().toISOString(),
+    description: `Note ${randomId().slice(0, 5)}`
+  };
+  await fetch(`${BASE_URL}/cases/${caseId}/interactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+async function closeCase(caseId: string) {
+  const body = { closedAt: new Date().toISOString() };
+  await fetch(`${BASE_URL}/cases/${caseId}/close`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
 async function main() {
   for (let i = 0; i < count; i++) {
     const clientId = await createClient(randName());
     const contactId = await createContact(randName());
     await linkContact(clientId, contactId);
+
+    const caseCount = Math.floor(Math.random() * 6); // 0-5
+    for (let c = 0; c < caseCount; c++) {
+      const caseId = await createCase(clientId);
+      const interactions = 1 + Math.floor(Math.random() * 10);
+      for (let j = 0; j < interactions; j++) {
+        await addInteraction(caseId);
+      }
+      if (Math.random() < 0.8) {
+        await closeCase(caseId);
+      }
+    }
   }
-  console.log(`Generated ${count} clients and contacts`);
+  console.log(`Generated ${count} clients with related data`);
 }
 
 main().catch((err) => {
