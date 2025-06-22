@@ -2,6 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
+  ScanCommand,
   TransactWriteCommand
 } from "@aws-sdk/lib-dynamodb";
 
@@ -60,6 +61,19 @@ export async function getEventsForAggregate(
     })
   );
 
+  return result.Items || [];
+}
+
+export async function getEventsByPrefix(prefix: string): Promise<any[]> {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: "EventStore",
+      FilterExpression: "begins_with(PK, :pk)",
+      ExpressionAttributeValues: {
+        ":pk": prefix
+      }
+    })
+  );
   return result.Items || [];
 }
 
@@ -132,11 +146,13 @@ export async function appendEvent(
 export interface EventStore {
   appendEvent: typeof appendEvent;
   getEventsForAggregate: typeof getEventsForAggregate;
+  getEventsByPrefix: typeof getEventsByPrefix;
   subscribe: typeof subscribe;
 }
 
 export const eventStore: EventStore = {
   appendEvent,
   getEventsForAggregate,
+  getEventsByPrefix,
   subscribe
 };
