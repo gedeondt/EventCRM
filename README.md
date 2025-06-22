@@ -1,11 +1,11 @@
 # EventCRM
 
-This project explores building a CRM using **Event Sourcing** in Node.js. The codebase follows a _feature-oriented_ approach with **vertical slices**, meaning each feature lives in its own directory with the commands, events and HTTP routes that belong to it.
+This project explores building a CRM using **Event Sourcing** in Node.js. The codebase follows a _feature-oriented_ approach with **vertical slices**, meaning each use case lives in its own directory with the commands, events and HTTP routes that belong to it.
 
 ## Goals
 
 - Model CRM entities (contacts and clients) as aggregates whose changes are represented by immutable events.
-- Allow the system to grow by adding new slices without affecting the rest of the code.
+- Allow the system to grow by adding new slices within each aggregate without affecting the rest of the code.
 - Provide traceability for every operation through a `TraceContext` carried inside the events.
 
 ## Structure
@@ -14,7 +14,7 @@ This project explores building a CRM using **Event Sourcing** in Node.js. The co
 src/
 ├─ server.ts          # Express service entrypoint
 ├─ shared/            # Common utilities (event-store, trace)
-└─ slices/
+└─ aggregates/
    └─ contact/
       ├─ create-contact/
       │  ├─ index.ts   # Command + event
@@ -33,8 +33,8 @@ src/
       └─ project-client/
 ```
 
-- **server.ts** registers each slice as an Express router.
-- Inside `slices/` every file implements part of the command and event flow.
+- **server.ts** registers each aggregate as an Express router.
+- Inside `aggregates/` each aggregate is composed of slices implementing the command and event flow.
 
 ## Event Store
 
@@ -72,7 +72,7 @@ subscribe('ContactDeleted', (evt) => {
 
 _Infrastructure:_ the `infra/` folder contains Terraform definitions that create the `EventStore` table with streams enabled for future event subscriptions.
 
-## Contact slice
+## Contact aggregate
 
 The first slice implemented handles creating and editing contacts. Each command produces an event (`ContactCreated` or `ContactEdited`) that is then stored using `appendEvent`. Each operation now has its own folder with a dedicated `http.ts` file:
 
@@ -87,7 +87,7 @@ router.put('/contacts/:id', async (req, res) => { /* ... */ });
 router.delete('/contacts/:id', async (req, res) => { /* ... */ });
 ```
 
-## Client slice
+## Client aggregate
 
 The client aggregate keeps references to contacts. It provides endpoints for creation, editing and for linking or unlinking contacts:
 
