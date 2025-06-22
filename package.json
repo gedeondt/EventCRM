@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite-node src/server.ts",
-    "test": "tsc --outDir dist && node --test dist/**/*.test.js"
+    "test": "tsc --outDir dist && node --test dist/**/*.test.js",
+    "seed": "vite-node src/scripts/generate-data.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.540.0",
