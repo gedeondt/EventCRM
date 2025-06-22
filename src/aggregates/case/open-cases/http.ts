@@ -16,11 +16,13 @@ export function registerOpenCasesRoutes(router: Router, eventStore: EventStore) 
   router.get('/cases/open', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
     const clientId = req.query.clientId?.toString();
+    const startTime = Date.now();
 
     try {
       const events = await eventStore.getEventsByPrefix('case#');
       const cases = projectOpenCases(events, clientId);
-      console.log(`[OpenCasesFetched]`, { traceId: trace.traceId, spanId: trace.spanId, count: cases.length, clientId });
+      const durationMs = Date.now() - startTime;
+      console.log(`[OpenCasesFetched]`, { traceId: trace.traceId, spanId: trace.spanId, count: cases.length, clientId, durationMs });
       return res.status(200).json(cases);
     } catch (err) {
       console.error('[get-open-cases error]', err);

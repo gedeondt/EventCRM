@@ -16,6 +16,7 @@ export function registerCloseCaseRoutes(router: Router, eventStore: EventStore) 
 
   router.post('/cases/:id/close', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -35,10 +36,12 @@ export function registerCloseCaseRoutes(router: Router, eventStore: EventStore) 
     try {
       const version = 3; // TODO: real version
       await eventStore.appendEvent(result.value, 'case', cmd.caseId.value, version);
+      const durationMs = Date.now() - startTime;
       console.log(`[CaseClosed]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        caseId: cmd.caseId.value
+        caseId: cmd.caseId.value,
+        durationMs
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {

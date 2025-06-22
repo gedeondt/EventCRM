@@ -18,6 +18,7 @@ export function registerCreateCaseRoutes(router: Router, eventStore: EventStore)
 
   router.post('/cases', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -38,11 +39,13 @@ export function registerCreateCaseRoutes(router: Router, eventStore: EventStore)
 
     try {
       await eventStore.appendEvent(result.value, 'case', result.value.caseId, 1);
+      const durationMs = Date.now() - startTime;
       console.log(`[CaseCreated]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         caseId: result.value.caseId,
-        clientId: result.value.clientId
+        clientId: result.value.clientId,
+        durationMs
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

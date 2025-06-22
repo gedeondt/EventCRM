@@ -16,6 +16,7 @@ export function registerProjectClientRoutes(router: Router, eventStore: EventSto
   router.get('/clients/:id', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
     const clientId = req.params.id;
+    const startTime = Date.now();
 
     try {
       const events = await eventStore.getEventsForAggregate('client', clientId);
@@ -25,7 +26,8 @@ export function registerProjectClientRoutes(router: Router, eventStore: EventSto
         return res.status(404).json({ error: 'Client not found' });
       }
 
-      console.log(`[ClientFetched]`, { traceId: trace.traceId, spanId: trace.spanId, clientId });
+      const durationMs = Date.now() - startTime;
+      console.log(`[ClientFetched]`, { traceId: trace.traceId, spanId: trace.spanId, clientId, durationMs });
       return res.status(200).json(state);
     } catch (err) {
       console.error('[get-client error]', err);

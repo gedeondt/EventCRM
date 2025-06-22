@@ -17,6 +17,7 @@ export function registerAddInteractionRoutes(router: Router, eventStore: EventSt
 
   router.post('/cases/:id/interactions', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -37,10 +38,12 @@ export function registerAddInteractionRoutes(router: Router, eventStore: EventSt
     try {
       const version = 2; // TODO: real version
       await eventStore.appendEvent(result.value, 'case', cmd.caseId.value, version);
+      const durationMs = Date.now() - startTime;
       console.log(`[InteractionAdded]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
-        caseId: cmd.caseId.value
+        caseId: cmd.caseId.value,
+        durationMs
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {

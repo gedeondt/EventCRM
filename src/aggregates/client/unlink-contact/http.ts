@@ -17,6 +17,7 @@ export function registerUnlinkContactRoutes(router: Router, eventStore: EventSto
 
   router.delete('/clients/:id/contacts/:contactId', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
+    const startTime = Date.now();
     let cmd;
     try {
       cmd = {
@@ -35,11 +36,13 @@ export function registerUnlinkContactRoutes(router: Router, eventStore: EventSto
 
     try {
       await eventStore.appendEvent(result.value, 'client', result.value.clientId, 4);
+      const durationMs = Date.now() - startTime;
       console.log(`[ContactUnlinked]`, {
         traceId: trace.traceId,
         spanId: trace.spanId,
         clientId: result.value.clientId,
-        contactId: result.value.contactId
+        contactId: result.value.contactId,
+        durationMs
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {
