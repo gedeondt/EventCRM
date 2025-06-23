@@ -14,23 +14,28 @@ This project explores building a CRM using **Event Sourcing** in Node.js. The co
 src/
 ├─ server.ts          # Express service entrypoint
 ├─ shared/            # Common utilities (event-store, trace)
+├─ scripts/           # Utilities such as the data generator
 └─ aggregates/
-   └─ contact/
-      ├─ create-contact/
-      │  ├─ index.ts   # Command + event
-      │  └─ http.ts    # REST endpoint for creation
-      ├─ edit-contact/
-      │  ├─ index.ts
-      │  └─ http.ts    # Endpoint for editing
-      └─ project-contact/
-         ├─ index.ts   # Projection logic
-         └─ http.ts    # Endpoint for fetching
-   └─ client/
-      ├─ create-client/
-      ├─ edit-client/
-      ├─ link-contact/
-      ├─ unlink-contact/
-      └─ project-client/
+   ├─ contact/
+   │  ├─ create-contact/
+   │  ├─ edit-contact/
+   │  ├─ delete-contact/
+   │  ├─ get-contact/
+   │  └─ project-contact.ts
+   ├─ client/
+   │  ├─ create-client/
+   │  ├─ edit-client/
+   │  ├─ link-contact/
+   │  ├─ unlink-contact/
+   │  ├─ get-client/
+   │  └─ project-client.ts
+   └─ case/
+      ├─ create-case/
+      ├─ add-interaction/
+      ├─ close-case/
+      ├─ get-case/
+      ├─ open-cases/
+      └─ project-case.ts
 ```
 
 - **server.ts** registers each aggregate as an Express router.
@@ -38,10 +43,11 @@ src/
 
 ### Entities
 
-The project models two core aggregates:
+The project models three core aggregates:
 
 - **Contact** — `contactId`, `name`, `email` and `phone`.
 - **Client** — `clientId`, `name` and `industry`.
+- **Case** — `caseId`, `clientId`, `description`, `openedAt`, `closedAt` and a list of interactions.
 
 ## Event Store
 
@@ -94,6 +100,9 @@ router.put('/contacts/:id', async (req, res) => { /* ... */ });
 
 // 📌 DELETE /contacts/:id → Delete contact
 router.delete('/contacts/:id', async (req, res) => { /* ... */ });
+
+// 📌 GET /contacts/:id → Fetch contact details
+router.get('/contacts/:id', async (req, res) => { /* ... */ });
 ```
 
 ## Client aggregate
@@ -109,6 +118,30 @@ router.post('/clients/:id/contacts', async (req, res) => { /* ... */ });
 
 // 📌 DELETE /clients/:id/contacts/:contactId → Unlink contact
 router.delete('/clients/:id/contacts/:contactId', async (req, res) => { /* ... */ });
+
+// 📌 GET /clients/:id → Fetch client details
+router.get('/clients/:id', async (req, res) => { /* ... */ });
+```
+
+## Case aggregate
+
+Cases track interactions with a client. Each case can be opened, receive notes and be closed. The aggregate exposes the following routes:
+
+```ts
+// 📌 POST /cases → Create case
+router.post('/cases', async (req, res) => { /* ... */ });
+
+// 📌 POST /cases/:id/interactions → Add interaction
+router.post('/cases/:id/interactions', async (req, res) => { /* ... */ });
+
+// 📌 POST /cases/:id/close → Close case
+router.post('/cases/:id/close', async (req, res) => { /* ... */ });
+
+// 📌 GET /cases/:id → Fetch case details
+router.get('/cases/:id', async (req, res) => { /* ... */ });
+
+// 📌 GET /cases/open?clientId=... → List open cases
+router.get('/cases/open', async (req, res) => { /* ... */ });
 ```
 
 ## Running
@@ -124,6 +157,16 @@ Run `npm run dev:batch` to start in batch mode, which buffers events locally and
 flushes them to DynamoDB every 10 seconds.
 
 The service will be available at `http://localhost:3000` and exposes its endpoints under `/api`.
+
+### Generating sample data
+
+Use the seed script to create random clients, contacts and cases:
+
+```bash
+npm run seed -- 5
+```
+
+Set the `BASE_URL` environment variable to target a different instance.
 
 ## Testing
 
