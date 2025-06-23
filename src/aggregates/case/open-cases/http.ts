@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { projectOpenCases } from './index.js';
+import { OpenCasesProjection } from './subscription.js';
 import { createTraceContext } from '../../../shared/trace.js';
 import type { EventStore } from '../../../shared/event-store.js';
 
@@ -19,8 +20,14 @@ export function registerOpenCasesRoutes(router: Router, eventStore: EventStore) 
     const startTime = Date.now();
 
     try {
-      const events = await eventStore.getEventsByPrefix('case#');
-      const cases = projectOpenCases(events, clientId);
+      let cases;
+      if (clientId) {
+        const proj = (await eventStore.getProjection('client', clientId, 'open-cases')) as OpenCasesProjection | null;
+        cases = proj?.cases || [];
+      } else {
+        const events = await eventStore.getEventsByPrefix('case#');
+        cases = projectOpenCases(events);
+      }
       const durationMs = Date.now() - startTime;
       console.log(`[OpenCasesFetched]`, { traceId: trace.traceId, spanId: trace.spanId, count: cases.length, clientId, durationMs });
       return res.status(200).json(cases);
