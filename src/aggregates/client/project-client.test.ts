@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { projectClient } from './index.js';
+import { projectClient } from './project-client.js';
 
 const trace = { traceId: 't', spanId: 's', timestamp: new Date().toISOString() };
 

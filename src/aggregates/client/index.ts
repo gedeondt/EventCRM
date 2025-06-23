@@ -5,7 +5,7 @@ import { registerCreateClientRoutes } from './create-client/http.js';
 import { registerEditClientRoutes } from './edit-client/http.js';
 import { registerLinkContactRoutes } from './link-contact/http.js';
 import { registerUnlinkContactRoutes } from './unlink-contact/http.js';
-import { registerProjectClientRoutes } from './project-client/http.js';
+import { registerGetClientRoutes } from './get-client/http.js';
 import { registerUnlinkOnContactDeleted } from './unlink-contact/subscription.js';
 
 export class ClientAggregate implements Aggregate {
@@ -14,7 +14,7 @@ export class ClientAggregate implements Aggregate {
     registerEditClientRoutes(router, eventStore);
     registerLinkContactRoutes(router, eventStore);
     registerUnlinkContactRoutes(router, eventStore);
-    registerProjectClientRoutes(router, eventStore);
+    registerGetClientRoutes(router, eventStore);
     registerUnlinkOnContactDeleted(eventStore);
   }
 }
