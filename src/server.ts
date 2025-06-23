@@ -3,6 +3,7 @@ import { eventStore } from './shared/event-store.js';
 import { ClientAggregate } from './aggregates/client/index.js';
 import { ContactAggregate } from './aggregates/contact/index.js';
 import { CaseAggregate } from './aggregates/case/index.js';
+import { ContractAggregate } from './aggregates/contract/index.js';
 
 const app = express();
 app.use(express.json());
@@ -13,6 +14,7 @@ app.use('/api', router);
 new ContactAggregate(router, eventStore);
 new ClientAggregate(router, eventStore);
 new CaseAggregate(router, eventStore);
+new ContractAggregate(router, eventStore);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

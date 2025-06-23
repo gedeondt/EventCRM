@@ -36,6 +36,11 @@ src/
       ├─ get-case/
       ├─ open-cases/
       └─ project-case.ts
+   └─ contract/
+      ├─ create-contract/
+      ├─ add-version/
+      ├─ get-contract/
+      └─ project-contract.ts
 ```
 
 - **server.ts** registers each aggregate as an Express router.
@@ -43,11 +48,12 @@ src/
 
 ### Entities
 
-The project models three core aggregates:
+The project models four core aggregates:
 
 - **Contact** — `contactId`, `name`, `email` and `phone`.
 - **Client** — `clientId`, `name` and `industry`.
 - **Case** — `caseId`, `clientId`, `description`, `openedAt`, `closedAt` and a list of interactions.
+- **Contract** — `contractId`, `clientId` and a list of versions with supply details.
 
 ## Event Store
 
@@ -157,6 +163,21 @@ router.get('/cases/:id', async (req, res) => { /* ... */ });
 
 // 📌 GET /cases/open?clientId=... → List open cases
 router.get('/cases/open', async (req, res) => { /* ... */ });
+```
+
+## Contract aggregate
+
+Contracts belong to a client and are immutable. New details are stored as additional versions:
+
+```ts
+// 📌 POST /contracts → Create contract
+router.post('/contracts', async (req, res) => { /* ... */ });
+
+// 📌 POST /contracts/:id/versions → Add contract version
+router.post('/contracts/:id/versions', async (req, res) => { /* ... */ });
+
+// 📌 GET /contracts/:id → Fetch contract details
+router.get('/contracts/:id', async (req, res) => { /* ... */ });
 ```
 
 ## Running
