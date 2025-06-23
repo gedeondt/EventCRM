@@ -85,7 +85,22 @@ subscribe('ContactDeleted', (evt) => {
 });
 ```
 
-_Infrastructure:_ the `infra/` folder contains Terraform definitions that create the `EventStore` table with streams enabled for future event subscriptions.
+Slices may also subscribe to build **projections**. After an event has been
+written, the store will notify projection subscribers which can return an object
+to persist in the `ProjectionStore` table:
+
+```ts
+subscribeProjection('ClientCreated', (evt) => ({
+  projection: { name: evt.name },
+  aggregateType: 'client',
+  aggregateId: evt.clientId,
+  name: 'summary'
+}));
+```
+
+_Infrastructure:_ the `infra/` folder contains Terraform definitions that create
+both the `EventStore` and `ProjectionStore` tables with streams enabled for
+future event subscriptions.
 
 ## Contact aggregate
 
