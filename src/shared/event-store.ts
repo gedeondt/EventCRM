@@ -4,7 +4,8 @@ import {
   QueryCommand,
   ScanCommand,
   TransactWriteCommand,
-  BatchWriteCommand
+  BatchWriteCommand,
+  PutCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const REGION = process.env.AWS_REGION || 'eu-west-1';
@@ -14,20 +15,28 @@ const client = new DynamoDBClient({ region: REGION });
 export const docClient = DynamoDBDocumentClient.from(client);
 
 const MODE = process.env.EVENT_STORE_MODE ?? 'direct';
-const buffer: Record<string, any>[] = [];
+const buffer: { item: Record<string, any>; event: any }[] = [];
 
 async function flushBuffer() {
   if (buffer.length === 0) return;
   const items = buffer.splice(0, buffer.length);
   for (let i = 0; i < items.length; i += 25) {
-    const batch = items.slice(i, i + 25).map((Item) => ({ PutRequest: { Item } }));
+    const slice = items.slice(i, i + 25);
+    const batch = slice.map((b) => ({ PutRequest: { Item: b.item } }));
     let requestItems: Record<string, any> = { EventStore: batch };
     do {
-      const res = await docClient.send(new BatchWriteCommand({ RequestItems: requestItems }));
-      requestItems = res.UnprocessedItems && res.UnprocessedItems.EventStore?.length
-        ? { EventStore: res.UnprocessedItems.EventStore }
-        : undefined as any;
+      const res = await docClient.send(
+        new BatchWriteCommand({ RequestItems: requestItems })
+      );
+      requestItems =
+        res.UnprocessedItems && res.UnprocessedItems.EventStore?.length
+          ? { EventStore: res.UnprocessedItems.EventStore }
+          : (undefined as any);
     } while (requestItems);
+
+    for (const b of slice) {
+      await handleProjections(b.event);
+    }
   }
 }
 
@@ -112,6 +121,26 @@ export async function getEventsByPrefix(prefix: string): Promise<any[]> {
   return items;
 }
 
+export async function getProjection(
+  aggregateType: string,
+  aggregateId: string,
+  name: string
+): Promise<any | null> {
+  const pk = `${aggregateType}#${aggregateId}`;
+  const res = await docClient.send(
+    new QueryCommand({
+      TableName: 'ProjectionStore',
+      KeyConditionExpression: 'PK = :pk AND SK = :sk',
+      ExpressionAttributeValues: {
+        ':pk': pk,
+        ':sk': name
+      },
+      Limit: 1
+    })
+  );
+  return res.Items?.[0] || null;
+}
+
 export type AppendDirective =
   | { cancel: true }
   | {
@@ -121,13 +150,49 @@ export type AppendDirective =
       version: number;
     };
 
+export type ProjectionDirective = {
+  projection: any;
+  aggregateType: string;
+  aggregateId: string;
+  name: string;
+};
+
+type ProjectionSubscriber = (
+  event: any
+) => Promise<ProjectionDirective | void> | ProjectionDirective | void;
+
 type Subscriber = (event: any) => Promise<AppendDirective | void> | AppendDirective | void;
 
 const subscribers: Record<string, Subscriber[]> = {};
+const projectionSubscribers: Record<string, ProjectionSubscriber[]> = {};
 
 export function subscribe(eventType: string, sub: Subscriber) {
   if (!subscribers[eventType]) subscribers[eventType] = [];
   subscribers[eventType].push(sub);
+}
+
+async function writeProjection(d: ProjectionDirective) {
+  const item = {
+    PK: `${d.aggregateType}#${d.aggregateId}`,
+    SK: d.name,
+    ...d.projection
+  };
+  await docClient.send(new PutCommand({ TableName: 'ProjectionStore', Item: item }));
+}
+
+async function handleProjections(event: any) {
+  const subs = projectionSubscribers[event.type] || [];
+  for (const s of subs) {
+    const res = await Promise.resolve(s(event));
+    if (res && 'projection' in res) {
+      await writeProjection(res);
+    }
+  }
+}
+
+export function subscribeProjection(eventType: string, sub: ProjectionSubscriber) {
+  if (!projectionSubscribers[eventType]) projectionSubscribers[eventType] = [];
+  projectionSubscribers[eventType].push(sub);
 }
 
 export async function appendEvent(
@@ -171,29 +236,40 @@ export async function appendEvent(
     Put: {
       TableName: "EventStore",
       Item: itm,
-      ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)"
+      ConditionExpression:
+        "attribute_not_exists(PK) AND attribute_not_exists(SK)"
     }
   }));
-  if (MODE === 'batch') {
-    for (const t of transactItems) {
-      buffer.push(t.Put.Item);
+
+  const events = [event, ...directives.filter((d) => d && "event" in d).map((d: any) => d.event)];
+
+  if (MODE === "batch") {
+    for (let i = 0; i < transactItems.length; i++) {
+      buffer.push({ item: transactItems[i].Put.Item, event: events[i] });
     }
     return;
   }
 
   await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
+  for (const ev of events) {
+    await handleProjections(ev);
+  }
 }
 
 export interface EventStore {
   appendEvent: typeof appendEvent;
   getEventsForAggregate: typeof getEventsForAggregate;
   getEventsByPrefix: typeof getEventsByPrefix;
+  getProjection: typeof getProjection;
   subscribe: typeof subscribe;
+  subscribeProjection: typeof subscribeProjection;
 }
 
 export const eventStore: EventStore = {
   appendEvent,
   getEventsForAggregate,
   getEventsByPrefix,
-  subscribe
+  getProjection,
+  subscribe,
+  subscribeProjection
 };
