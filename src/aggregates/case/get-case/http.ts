@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { projectClient } from './index.js';
+import { projectCase } from '../project-case.js';
 import { createTraceContext } from '../../../shared/trace.js';
 import type { EventStore } from '../../../shared/event-store.js';
 
-export function registerProjectClientRoutes(router: Router, eventStore: EventStore) {
+export function registerGetCaseRoutes(router: Router, eventStore: EventStore) {
   function extractTraceFromHeaders(headers: Record<string, unknown>) {
     return createTraceContext({
       traceId: headers['x-trace-id']?.toString(),
@@ -13,26 +13,25 @@ export function registerProjectClientRoutes(router: Router, eventStore: EventSto
     });
   }
 
-  router.get('/clients/:id', async (req, res) => {
+  router.get('/cases/:id', async (req, res) => {
     const trace = extractTraceFromHeaders(req.headers);
-    const clientId = req.params.id;
+    const caseId = req.params.id;
     const startTime = Date.now();
 
     try {
-      const events = await eventStore.getEventsForAggregate('client', clientId);
-      const state = projectClient(events);
+      const events = await eventStore.getEventsForAggregate('case', caseId);
+      const state = projectCase(events);
 
       if (!state) {
-        return res.status(404).json({ error: 'Client not found' });
+        return res.status(404).json({ error: 'Case not found' });
       }
 
       const durationMs = Date.now() - startTime;
-      console.log(`[ClientFetched]`, { traceId: trace.traceId, spanId: trace.spanId, clientId, durationMs });
+      console.log(`[CaseFetched]`, { traceId: trace.traceId, spanId: trace.spanId, caseId, durationMs });
       return res.status(200).json(state);
     } catch (err) {
-      console.error('[get-client error]', err);
+      console.error('[get-case error]', err);
       return res.status(500).json({ error: 'Internal server error' });
     }
   });
 }
-

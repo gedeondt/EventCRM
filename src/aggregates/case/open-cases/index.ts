@@ -1,4 +1,4 @@
-import { projectCase, CaseState } from '../project-case/index.js';
+import { projectCase, CaseState } from '../project-case.js';
 
 export function projectOpenCases(events: any[], clientId?: string): CaseState[] {
   const byCase: Record<string, any[]> = {};
