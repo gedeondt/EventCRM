@@ -80,7 +80,8 @@ export async function appendEvent(event: any, aggregateId: string, version: numb
 }
 ```
 
-The event store can run in **direct** mode (default) or in **batch** mode. Set `EVENT_STORE_MODE=batch` to buffer events locally and write them in bulk every 10 seconds. Reads always come from DynamoDB.
+The event store can run in **direct** mode (default) or in **batch** mode. Set `EVENT_STORE_MODE=batch` to buffer events locally and write them in bulk every 10 seconds.
+Reads normally go to DynamoDB but you can set `EVENT_STORE_ADAPTER=memory` to use an in-memory store instead. This adapter requires no infrastructure and is ideal for running the tests locally.
 
 Slices can **subscribe** to specific event types:
 
