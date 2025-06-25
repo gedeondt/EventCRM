@@ -1,6 +1,7 @@
 import express from 'express';
-import { eventStore as dynamoEventStore } from './shared/event-store.js';
-import { memoryEventStore } from './shared/memory-event-store.js';
+import { EventStore } from './shared/event-store.js';
+import { DynamoDBAdapter } from './shared/adapters/dynamo-adapter.js';
+import { MemoryAdapter } from './shared/adapters/memory-adapter.js';
 import { ClientAggregate } from './aggregates/client/index.js';
 import { ContactAggregate } from './aggregates/contact/index.js';
 import { CaseAggregate } from './aggregates/case/index.js';
@@ -12,9 +13,10 @@ app.use(express.json());
 const router = express.Router();
 app.use('/api', router);
 
-const store = process.env.EVENT_STORE_ADAPTER === 'memory'
-  ? memoryEventStore
-  : dynamoEventStore;
+const adapter = process.env.EVENT_STORE_ADAPTER === 'memory'
+  ? new MemoryAdapter()
+  : new DynamoDBAdapter();
+const store = new EventStore(adapter);
 
 new ContactAggregate(router, store);
 new ClientAggregate(router, store);
