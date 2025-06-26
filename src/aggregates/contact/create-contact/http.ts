@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleCreateContact } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { ContactId } from '../value-objects/contact-id.js';
 import { Name } from '../value-objects/name.js';
 import { Mail } from '../value-objects/mail.js';
@@ -46,16 +47,13 @@ export function registerCreateContactRoutes(router: Router, eventStore: EventSto
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[create-contact error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }

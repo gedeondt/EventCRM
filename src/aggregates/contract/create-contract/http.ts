@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleCreateContract } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { ContractId } from '../value-objects/contract-id.js';
 import { ClientId } from '../../client/value-objects/client-id.js';
 import { Cups } from '../value-objects/cups.js';
@@ -51,16 +52,13 @@ export function registerCreateContractRoutes(router: Router, eventStore: EventSt
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[create-contract error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }

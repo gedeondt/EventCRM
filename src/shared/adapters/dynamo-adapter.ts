@@ -8,6 +8,7 @@ import {
   PutCommand
 } from '@aws-sdk/lib-dynamodb';
 import type { EventStoreAdapter } from './event-store-adapter.js';
+import { EventStoreConflictError } from '../errors.js';
 
 const REGION = process.env.AWS_REGION || 'eu-west-1';
 const client = new DynamoDBClient({ region: REGION });
@@ -68,7 +69,17 @@ export class DynamoDBAdapter implements EventStoreAdapter {
         ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)'
       }
     }));
-    await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
+    try {
+      await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
+    } catch (err: any) {
+      if (
+        err.name === 'ConditionalCheckFailedException' ||
+        err.code === 'ConditionalCheckFailedException'
+      ) {
+        throw new EventStoreConflictError();
+      }
+      throw err;
+    }
   }
 
   async batchWriteEvents(items: any[]): Promise<void> {

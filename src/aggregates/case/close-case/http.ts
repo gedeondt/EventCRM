@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleCloseCase } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { CaseId } from '../value-objects/case-id.js';
 
 export function registerCloseCaseRoutes(router: Router, eventStore: EventStore) {
@@ -41,16 +42,13 @@ export function registerCloseCaseRoutes(router: Router, eventStore: EventStore) 
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[close-case error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
