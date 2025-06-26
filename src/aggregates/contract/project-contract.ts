@@ -38,6 +38,11 @@ export function projectContract(events: any[]): ContractState | null {
         });
         state.version += 1;
         break;
+
+      case 'ContractHolderChanged':
+        state.clientId = event.newClientId;
+        state.version += 1;
+        break;
     }
   }
 

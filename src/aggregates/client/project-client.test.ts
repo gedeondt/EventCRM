@@ -21,13 +21,30 @@ const linked = {
   timestamp: new Date().toISOString()
 };
 
+const debtAdded = {
+  type: 'DebtAdded',
+  clientId: '1',
+  amount: 50,
+  trace,
+  timestamp: new Date().toISOString()
+};
+
+const debtPaid = {
+  type: 'DebtPaid',
+  clientId: '1',
+  amount: 20,
+  trace,
+  timestamp: new Date().toISOString()
+};
+
 test('returns null for empty events', () => {
   assert.equal(projectClient([]), null);
 });
 
 test('projects latest state', () => {
-  const state = projectClient([created, linked]);
+  const state = projectClient([created, linked, debtAdded, debtPaid]);
   assert.equal(state?.contactIds.length, 1);
   assert.equal(state?.industry, 'Software');
-  assert.equal(state?.version, 2);
+  assert.equal(state?.debt, 30);
+  assert.equal(state?.version, 4);
 });
