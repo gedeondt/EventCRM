@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleAddInteraction } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { CaseId } from '../value-objects/case-id.js';
 import { Description } from '../value-objects/description.js';
 
@@ -43,16 +44,13 @@ export function registerAddInteractionRoutes(router: Router, eventStore: EventSt
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[add-interaction error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }

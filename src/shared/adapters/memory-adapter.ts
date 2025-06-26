@@ -1,4 +1,5 @@
 import type { EventStoreAdapter } from './event-store-adapter.js';
+import { EventStoreConflictError } from '../errors.js';
 
 export class MemoryAdapter implements EventStoreAdapter {
   private events: Record<string, any>[] = [];
@@ -26,7 +27,7 @@ export class MemoryAdapter implements EventStoreAdapter {
   async transactWriteEvents(items: any[]): Promise<void> {
     for (const it of items) {
       if (this.events.some((e) => e.PK === it.PK && e.SK === it.SK)) {
-        throw new Error('Item already exists');
+        throw new EventStoreConflictError();
       }
     }
     this.events.push(...items);

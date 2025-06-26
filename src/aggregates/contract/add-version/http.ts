@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleAddContractVersion } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { ContractId } from '../value-objects/contract-id.js';
 import { Cups } from '../value-objects/cups.js';
 import { Address } from '../value-objects/address.js';
@@ -50,16 +51,13 @@ export function registerAddVersionRoutes(router: Router, eventStore: EventStore)
       });
       return res.status(201).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[add-contract-version error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }

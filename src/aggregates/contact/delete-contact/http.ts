@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleDeleteContact } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
 import { extractTraceContext } from '../../../shared/trace.js';
+import { EventStoreConflictError } from '../../../shared/errors.js';
 import { ContactId } from '../value-objects/contact-id.js';
 import { ClientId } from '../../client/value-objects/client-id.js';
 
@@ -44,16 +45,13 @@ export function registerDeleteContactRoutes(router: Router, eventStore: EventSto
       });
       return res.status(200).json({ status: 'ok' });
     } catch (err) {
-      const error = err as any;
-      if (
-        error.name === 'ConditionalCheckFailedException' ||
-        error.code === 'ConditionalCheckFailedException'
-      ) {
+      if (err instanceof EventStoreConflictError) {
         return res.status(409).json({
           error: 'Event already exists — possible duplicate or stale version.'
         });
       }
 
+      const error = err as any;
       console.error('[delete-contact error]', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
