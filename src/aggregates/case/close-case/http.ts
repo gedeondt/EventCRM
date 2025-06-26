@@ -1,21 +1,13 @@
 import { Router } from 'express';
 import { handleCloseCase } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import { CaseId } from '../value-objects/case-id.js';
 
 export function registerCloseCaseRoutes(router: Router, eventStore: EventStore) {
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.post('/cases/:id/close', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const startTime = Date.now();
     let cmd;
     try {

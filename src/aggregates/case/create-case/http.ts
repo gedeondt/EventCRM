@@ -1,23 +1,15 @@
 import { Router } from 'express';
 import { handleCreateCase } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import { CaseId } from '../value-objects/case-id.js';
 import { Description } from '../value-objects/description.js';
 import { ClientId } from '../../client/value-objects/client-id.js';
 
 export function registerCreateCaseRoutes(router: Router, eventStore: EventStore) {
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.post('/cases', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const startTime = Date.now();
     let cmd;
     try {

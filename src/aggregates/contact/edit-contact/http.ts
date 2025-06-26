@@ -1,24 +1,16 @@
 import { Router } from 'express';
 import { handleEditContact } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import { ContactId } from '../value-objects/contact-id.js';
 import { Name } from '../value-objects/name.js';
 import { Mail } from '../value-objects/mail.js';
 import { Phone } from '../value-objects/phone.js';
 
 export function registerEditContactRoutes(router: Router, eventStore: EventStore) {
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.put('/contacts/:id', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const startTime = Date.now();
     let cmd;
     try {

@@ -1,20 +1,12 @@
 import { Router } from 'express';
 import { projectClient } from '../project-client.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import type { EventStore } from '../../../shared/event-store.js';
 
 export function registerGetClientRoutes(router: Router, eventStore: EventStore) {
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.get('/clients/:id', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const clientId = req.params.id;
     const startTime = Date.now();
 

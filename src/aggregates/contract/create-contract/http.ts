@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { handleCreateContract } from './index.js';
 import type { EventStore } from '../../../shared/event-store.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import { ContractId } from '../value-objects/contract-id.js';
 import { ClientId } from '../../client/value-objects/client-id.js';
 import { Cups } from '../value-objects/cups.js';
@@ -10,17 +10,9 @@ import { Tariff } from '../value-objects/tariff.js';
 import { Power } from '../value-objects/power.js';
 
 export function registerCreateContractRoutes(router: Router, eventStore: EventStore) {
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.post('/contracts', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const startTime = Date.now();
     let cmd;
     try {

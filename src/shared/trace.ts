@@ -24,3 +24,12 @@ export function createTraceContext(overrides: Partial<TraceContext> = {}): Trace
 
   return trace;
 }
+
+export function extractTraceContext(headers: Record<string, unknown>): TraceContext {
+  return createTraceContext({
+    traceId: headers['x-trace-id']?.toString(),
+    spanId: headers['x-span-id']?.toString(),
+    source: headers['x-source']?.toString() || 'api',
+    userId: headers['x-user-id']?.toString()
+  });
+}
