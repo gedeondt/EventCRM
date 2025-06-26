@@ -1,21 +1,12 @@
 import { Router } from 'express';
 import { projectContact } from '../project-contact.js';
-import { createTraceContext } from '../../../shared/trace.js';
+import { extractTraceContext } from '../../../shared/trace.js';
 import type { EventStore } from '../../../shared/event-store.js';
 
 export function registerGetContactRoutes(router: Router, eventStore: EventStore) {
-  // Reuse same helper as others
-  function extractTraceFromHeaders(headers: Record<string, unknown>) {
-    return createTraceContext({
-      traceId: headers['x-trace-id']?.toString(),
-      spanId: headers['x-span-id']?.toString(),
-      source: headers['x-source']?.toString() || 'api',
-      userId: headers['x-user-id']?.toString()
-    });
-  }
 
   router.get('/contacts/:id', async (req, res) => {
-    const trace = extractTraceFromHeaders(req.headers);
+    const trace = extractTraceContext(req.headers);
     const contactId = req.params.id;
     const startTime = Date.now();
 
