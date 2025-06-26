@@ -7,6 +7,8 @@ import { registerLinkContactRoutes } from './link-contact/http.js';
 import { registerUnlinkContactRoutes } from './unlink-contact/http.js';
 import { registerGetClientRoutes } from './get-client/http.js';
 import { registerUnlinkOnContactDeleted } from './unlink-contact/subscription.js';
+import { registerAddDebtRoutes } from './add-debt/http.js';
+import { registerPayDebtRoutes } from './pay-debt/http.js';
 
 export class ClientAggregate implements Aggregate {
   constructor(router: Router, eventStore: EventStore) {
@@ -15,6 +17,8 @@ export class ClientAggregate implements Aggregate {
     registerLinkContactRoutes(router, eventStore);
     registerUnlinkContactRoutes(router, eventStore);
     registerGetClientRoutes(router, eventStore);
+    registerAddDebtRoutes(router, eventStore);
+    registerPayDebtRoutes(router, eventStore);
     registerUnlinkOnContactDeleted(eventStore);
   }
 }

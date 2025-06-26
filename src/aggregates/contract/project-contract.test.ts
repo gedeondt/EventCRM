@@ -29,13 +29,22 @@ const added = {
   timestamp: new Date().toISOString()
 };
 
+const holderChanged = {
+  type: 'ContractHolderChanged',
+  contractId: '1',
+  oldClientId: 'c1',
+  newClientId: 'c2',
+  trace,
+  timestamp: new Date().toISOString()
+};
+
 test('returns null for empty events', () => {
   assert.equal(projectContract([]), null);
 });
 
 test('projects latest state', () => {
-  const state = projectContract([created, added]);
+  const state = projectContract([created, added, holderChanged]);
   assert.equal(state?.versions.length, 2);
-  assert.equal(state?.clientId, 'c1');
-  assert.equal(state?.version, 2);
+  assert.equal(state?.clientId, 'c2');
+  assert.equal(state?.version, 3);
 });

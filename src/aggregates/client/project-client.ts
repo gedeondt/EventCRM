@@ -3,6 +3,7 @@ export type ClientState = {
   name?: string;
   industry?: string;
   contactIds: string[];
+  debt: number;
   version: number;
 };
 
@@ -12,6 +13,7 @@ export function projectClient(events: any[]): ClientState | null {
   const state: ClientState = {
     clientId: '',
     contactIds: [],
+    debt: 0,
     version: 0
   };
 
@@ -41,6 +43,16 @@ export function projectClient(events: any[]): ClientState | null {
         state.contactIds = state.contactIds.filter(
           (id) => id !== event.contactId
         );
+        state.version += 1;
+        break;
+
+      case 'DebtAdded':
+        state.debt += event.amount;
+        state.version += 1;
+        break;
+
+      case 'DebtPaid':
+        state.debt = Math.max(0, state.debt - event.amount);
         state.version += 1;
         break;
     }
